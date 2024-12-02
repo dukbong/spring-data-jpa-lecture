@@ -9,6 +9,9 @@ import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import study.data_jpa.dto.MemberDto;
 import study.data_jpa.entity.Member;
+import study.data_jpa.repository.projections.MemberProjection;
+import study.data_jpa.repository.projections.UsernameOnly;
+import study.data_jpa.repository.projections.UsernameOnlyDto;
 
 import java.util.List;
 import java.util.Optional;
@@ -96,4 +99,23 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
     // 실무에서 실시간 트래픽이 많은 곳에서 사용시 성능 저하가 있기 떄문에 낙관적 락을 사용해서 로직으로 풀어내는게 좋다.
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     List<Member> findLockByUsername(String username);
+
+
+    List<UsernameOnly> findProjectionsByUsername(@Param("username") String username);
+    List<UsernameOnlyDto> findProjections2ByUsername(@Param("username") String username);
+    // 쿼리는 같지만 가져오게 싶은게 다를때 사용하기 좋다. (동적 프로젝션)
+    <T> List<T> findProjections3ByUsername(@Param("username") String username, Class<T> clazz);
+
+
+    // 네이티브 쿼리 ( 제약이 너무 많다. )
+    // 1. sort 정상 동작 하지 않을 수 있다.
+    // 2. jpql처럼 애플리케이션 로딩 시점에서 문법 확인 불가
+    // 3. 동적 쿼리 불가
+    @Query(value = "select * from member where username = ?", nativeQuery = true)
+    Member findByNativeQuery(String username);
+
+    @Query(value = "select m.member_id as id, m.username, t.name as teamName from member m left join team t",
+    countQuery = "select count(*) from member",
+    nativeQuery = true)
+    Page<MemberProjection> findByNativeProjection(Pageable pageable);
 }
