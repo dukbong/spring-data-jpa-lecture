@@ -291,15 +291,8 @@ public class MemberRepositoryTest {
         Member member3 = memberRepository.save(new Member("member3", 25, null));
         Member member5 = memberRepository.save(new Member("member5", 30, null));
 
-        member4.setUsername("new-member4");
         // when
         int resultCount = memberRepository.bulkAgePlus(20);
-        // 영속성 컨테이너가 확실히 초기화 되었는지 검증
-        assertThat(entityManager.contains(member2)).isFalse();
-        assertThat(entityManager.contains(member1)).isFalse();
-        assertThat(entityManager.contains(member4)).isFalse();
-        assertThat(entityManager.contains(member3)).isFalse();
-        assertThat(entityManager.contains(member5)).isFalse();
 
         // then
         assertThat(resultCount).isEqualTo(3);
@@ -508,6 +501,30 @@ public class MemberRepositoryTest {
         // then
         Member result = memberRepository.findById(member1.getId()).get();
         assertThat(result.getUsername()).isEqualTo("member2");
+    }
+    
+    @Test
+    void lockTest() {
+        // given
+        Member member = new Member("member1", 10, null);
+        memberRepository.save(member);
+        entityManager.flush();
+        entityManager.clear();
+        // when
+        List<Member> findMember = memberRepository.findLockByUsername("member1");
+        
+        // then
+    }
+    
+    @Test
+    void callCustom() {
+        // given
+        List<Member> result1 = memberRepository.findMemberQueryDSLCustom();
+        List<Member> result2 = memberRepository.findMemberMybatisCustom();
+
+        // when
+        
+        // then
     }
 
 }

@@ -1,5 +1,6 @@
 package study.data_jpa.repository;
 
+import jakarta.persistence.LockModeType;
 import jakarta.persistence.QueryHint;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,7 +13,7 @@ import study.data_jpa.entity.Member;
 import java.util.List;
 import java.util.Optional;
 
-public interface MemberRepository extends JpaRepository<Member, Long> {
+public interface MemberRepository extends JpaRepository<Member, Long>, MemberRepositoryQueryDSL, MemberRepositoryMybatis {
 
     List<Member> findByUsernameAndAgeGreaterThan(String username, int age);
 
@@ -90,4 +91,9 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     // 아무리 최적화를 했다한들 이런건 다 비용이기 때문에 읽는거에 스냅샵을 만들 필요ㅇ가 없다.
     @QueryHints(value = @QueryHint(name = "org.hibernate.readOnly", value = "true"))
     Member findReadOnlyByUsername(@Param("username") String username);
+
+    // lock
+    // 실무에서 실시간 트래픽이 많은 곳에서 사용시 성능 저하가 있기 떄문에 낙관적 락을 사용해서 로직으로 풀어내는게 좋다.
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    List<Member> findLockByUsername(String username);
 }
